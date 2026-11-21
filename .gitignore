@@ -1,0 +1,11 @@
+.local/
+ref/
+*.so
+*.pcap
+*.pcapng
+*.log
+*.key
+*.pem
+.env
+backups/
+captures/
