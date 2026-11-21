@@ -1,0 +1,28 @@
+# OpenNBT log
+
+Every command and result, one change at a time. No car or head-unit access so far.
+
+## 2026-11-18 - Phase 0
+
+| # | Command / action | Result |
+|---|---|---|
+| 1 | `git init -b main` in project folder; `git remote add origin https://github.com/JoeeDeveloper/OpenNBT.git` | OK. Not pushed. |
+| 2 | Created `docs/`, `ref/`, `.local/`; wrote `.gitignore` (`.local/`, `ref/`, `*.so`, captures, logs, keys, `backups/`) | OK |
+| 3 | `git clone --depth 1` of `JayJay3071/nbt-android-auto`, `inotbarnacle/ID6_apps_prerelease`, `Sq00ky/Supra-iDrive6-Android-Auto` into `ref/<name>/` | OK. Read-only, nothing executed. |
+| 4 | Read reference files listed in the prompt (see FEASIBILITY.md for which) | `sysetshell`, `SYS_DEBUG`, `setk` appear in none of them. No diesel signals in the Evo repo. |
+| 5 | Wrote `docs/FEASIBILITY.md` | Done |
+
+Not yet read in full: `ref/ID6_apps_prerelease/source/native/src/collector.c`, `gauge_core.c`, `most/*`; `ref/nbt-android-auto/tools/nbt_request.py`, `src/android_auto/knob/ref/` (MOST/DSI client, PolyForm); the Supra NBT-AAD repo; the BimmerGestalt RHMI docs site.
+
+Note for Phase 1+: Phase 0 touched nothing on the car or head unit.
+
+## 2026-11-18 - Phase 1 prep (host only, no car)
+
+| # | Action | Result |
+|---|---|---|
+| 6 | User answers: engine unknown, no BMW diagnostic data, Win11 + ENET cable, no FeatureInstaller/QNX/VirtualBox yet | Recorded in docs/PREP.md |
+| 7 | Wrote `tools/hsfz_probe.py` (original code): only OBD `01xx` / UDS `22xxxx` accepted, needs `--yes-parked`, fresh connection per request, 0.2 s spacing, max 12, VIN DID redacted, captures to `.local/captures/` | Done, never run against a car |
+| 8 | Wrote `tests/test_hsfz_probe.py` (fake gateway on loopback) and `python -m unittest discover tests` | 11 tests pass |
+| 9 | Wrote `docs/PREP.md` | Done |
+
+Known unverified in the probe: the UDP discovery frame (`00 00 00 00 00 11` to port 6811) is from memory, not from a reference.
