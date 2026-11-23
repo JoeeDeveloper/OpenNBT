@@ -122,7 +122,7 @@ def add_ascii(result):
     return result
 
 
-def run_requests(plan, gateway, local, out_dir):
+def run_requests(plan, gateway, local, out_dir, port=HSFZ_PORT, on_row=None):
     """plan: list of (ecu, uds bytes). One fresh connection per request. Returns capture path."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -132,7 +132,7 @@ def run_requests(plan, gateway, local, out_dir):
             row = {"t": time.strftime("%H:%M:%S"), "ecu": "%02X" % ecu, "request": req.hex(" ")}
             try:
                 # fresh connection per request: a late reply can never match a later request
-                with socket.create_connection((gateway, HSFZ_PORT), timeout=2,
+                with socket.create_connection((gateway, port), timeout=2,
                                               source_address=(local, 0) if local else None) as s:
                     row.update(add_ascii(redact(req.hex(), exchange(s, ecu, req))))
             except (TimeoutError, OSError, ValueError) as e:
@@ -140,6 +140,8 @@ def run_requests(plan, gateway, local, out_dir):
             line = json.dumps(row)
             print(line, flush=True)
             fh.write(line + "\n")
+            if on_row:
+                on_row(row)
             time.sleep(SPACING_S)
     return out
 

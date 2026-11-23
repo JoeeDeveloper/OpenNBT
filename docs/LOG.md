@@ -32,3 +32,4 @@ Known unverified in the probe: the UDP discovery frame (`00 00 00 00 00 11` to p
 | # | Action | Result |
 |---|---|---|
 | 10 | Added `recon` to `tools/hsfz_probe.py`: fixed 12-request read-only sweep (22 F101/F150/F18C/F187/F189 on ECUs 10, 63, 60, 12), ASCII decode of printable replies, shared runner with `read`. ECU addresses/DIDs are UNVERIFIED general knowledge. | 14 tests pass |
+| 11 | Added `tools/opennbt_gui.py` (tkinter, demo mode), `tools/analyze_capture.py`, `tools/fake_gateway.py`; `run_requests` gained `port`/`on_row`. GUI NOT run here: no tkinter/display on this Linux box, syntax-checked only. | 16 tests pass |

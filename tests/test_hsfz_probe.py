@@ -9,6 +9,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 import hsfz_probe as hp  # noqa: E402
+import analyze_capture as ac  # noqa: E402
+import fake_gateway as fg  # noqa: E402
+import tempfile  # noqa: E402
 
 
 def frame(src, dst, payload, control=1):
@@ -122,6 +125,33 @@ class Probe(unittest.TestCase):
             hp.main(["read", "--gateway", "169.254.10.3", "010C"])
         with self.assertRaises(SystemExit):
             hp.main(["discover"])
+
+
+class DemoAndAnalyzer(unittest.TestCase):
+    def test_recon_against_fake_gateway_and_summary(self):
+        port, stop = fg.start()
+        rows = []
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                plan = [(e, bytes.fromhex(x)) for e, x in hp.RECON_PLAN]
+                out = hp.run_requests(plan, "127.0.0.1", "", d, port=port, on_row=rows.append)
+                loaded = ac.load_rows(out)
+        finally:
+            stop()
+        self.assertEqual(len(rows), len(hp.RECON_PLAN))
+        self.assertEqual(loaded, rows)
+        by = {(r["ecu"], r["request"]): r for r in rows}
+        self.assertEqual(by[("63", "22 f1 87")]["ascii"][:7], "HU-DEMO")
+        self.assertEqual(by[("60", "22 f1 01")]["nrc"], "31")
+        text = ac.summarize(rows)
+        self.assertIn("ECU 63", text)
+        self.assertIn("NRC 31", text)
+
+    def test_analyzer_empty_and_ilevel(self):
+        self.assertIn("empty", ac.summarize([]))
+        row = {"ecu": "10", "request": "22 f1 01", "reply": "x", "data": "x", "ascii": "F020-14-03-503"}
+        self.assertIn("I-LEVEL?=F020-14-03-503", ac.summarize([row]))
+        self.assertIn("Nothing answered", ac.summarize([{"ecu": "10", "request": "22 f1 01", "error": "TimeoutError: no reply"}]))
 
 
 if __name__ == "__main__":
