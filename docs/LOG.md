@@ -26,3 +26,9 @@ Note for Phase 1+: Phase 0 touched nothing on the car or head unit.
 | 9 | Wrote `docs/PREP.md` | Done |
 
 Known unverified in the probe: the UDP discovery frame (`00 00 00 00 00 11` to port 6811) is from memory, not from a reference.
+
+## 2026-11-23 - recon command (host only, no car yet)
+
+| # | Action | Result |
+|---|---|---|
+| 10 | Added `recon` to `tools/hsfz_probe.py`: fixed 12-request read-only sweep (22 F101/F150/F18C/F187/F189 on ECUs 10, 63, 60, 12), ASCII decode of printable replies, shared runner with `read`. ECU addresses/DIDs are UNVERIFIED general knowledge. | 14 tests pass |
