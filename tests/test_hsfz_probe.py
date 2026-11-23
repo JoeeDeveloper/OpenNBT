@@ -102,6 +102,21 @@ class Probe(unittest.TestCase):
         self.assertEqual(r["data"], "<redacted VIN>")
         self.assertEqual(hp.redact("22f187", {"data": "aa"})["data"], "aa")
 
+    def test_recon_plan_is_read_only_and_bounded(self):
+        self.assertLessEqual(len(hp.RECON_PLAN), hp.MAX_REQUESTS)
+        for ecu, did in hp.RECON_PLAN:
+            hp.parse_request(did)
+            self.assertNotIn(did.lower(), hp.VIN_DIDS)
+
+    def test_add_ascii(self):
+        self.assertEqual(hp.add_ascii({"data": "41 42 43"})["ascii"], "ABC")
+        self.assertNotIn("ascii", hp.add_ascii({"data": "00 01 ff"}))
+        self.assertNotIn("ascii", hp.add_ascii({"nrc": "31"}))
+
+    def test_recon_refuses_without_confirmation(self):
+        with self.assertRaises(SystemExit):
+            hp.main(["recon", "--gateway", "169.254.10.3"])
+
     def test_cli_refuses_without_confirmation(self):
         with self.assertRaises(SystemExit):
             hp.main(["read", "--gateway", "169.254.10.3", "010C"])

@@ -5,6 +5,7 @@ Sends ONLY OBD service 01 (e.g. 010C) and UDS service 22 (e.g. 22F190). Anything
 is opened. Parked, ignition on, handbrake on. Nothing is sent unless --yes-parked is given.
 
   discover  UDP broadcast to find the gateway address (frame layout is UNVERIFIED, see DISCOVERY_REQUEST)
+  recon     fixed 12-request identification sweep (gateway, head unit, cluster, DME), then read the capture
   read      one fresh TCP connection per request, spaced, bounded, captures to .local/captures/ (gitignored)
 
 VIN (DID F190) and discovery payloads are never printed or stored; they are replaced by a marker.
@@ -31,6 +32,14 @@ REPLY_TIMEOUT_S = 2.0
 PENDING_TOTAL_S = 5.0
 READ_RE = re.compile(r"^(01[0-9A-Fa-f]{2}|22[0-9A-Fa-f]{4})$")
 VIN_DIDS = {"22f190"}
+# UNVERIFIED (general BMW knowledge, not confirmed on your car): ECU addresses and identification DIDs.
+# A wrong address/DID just times out or returns a negative response; nothing is written.
+RECON_PLAN = [
+    (0x10, "22F101"), (0x10, "22F150"), (0x10, "22F18C"),                      # ZGW / gateway: I-level, SVK
+    (0x63, "22F101"), (0x63, "22F150"), (0x63, "22F187"), (0x63, "22F189"), (0x63, "22F18C"),  # head unit
+    (0x60, "22F101"), (0x60, "22F150"),                                        # instrument cluster
+    (0x12, "22F187"), (0x12, "22F18C"),                                        # DME/DDE
+]
 
 
 def parse_request(text):
@@ -103,28 +112,53 @@ def redact(request_hex, result):
     return result
 
 
-def cmd_read(args):
-    if not args.yes_parked:
-        sys.exit("refusing: add --yes-parked to confirm parked, handbrake on, ignition on, read-only")
-    if len(args.requests) > MAX_REQUESTS:
-        sys.exit("at most %d requests per run" % MAX_REQUESTS)
-    out_dir = Path(args.capture_dir)
+def add_ascii(result):
+    """Identification DIDs are often ASCII; show it when every byte is printable."""
+    data = result.get("data")
+    if data:
+        raw = bytes.fromhex(data.replace(" ", ""))
+        if raw and all(32 <= b < 127 for b in raw):
+            result["ascii"] = raw.decode("ascii")
+    return result
+
+
+def run_requests(plan, gateway, local, out_dir):
+    """plan: list of (ecu, uds bytes). One fresh connection per request. Returns capture path."""
+    out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / ("capture-%s.jsonl" % time.strftime("%Y%m%d-%H%M%S"))
     with out.open("a", encoding="utf-8") as fh:
-        for req in args.requests:
-            row = {"t": time.strftime("%H:%M:%S"), "ecu": "%02X" % args.ecu, "request": req.hex(" ")}
+        for ecu, req in plan:
+            row = {"t": time.strftime("%H:%M:%S"), "ecu": "%02X" % ecu, "request": req.hex(" ")}
             try:
                 # fresh connection per request: a late reply can never match a later request
-                with socket.create_connection((args.gateway, HSFZ_PORT), timeout=2,
-                                              source_address=(args.local, 0) if args.local else None) as s:
-                    row.update(redact(req.hex(), exchange(s, args.ecu, req)))
+                with socket.create_connection((gateway, HSFZ_PORT), timeout=2,
+                                              source_address=(local, 0) if local else None) as s:
+                    row.update(add_ascii(redact(req.hex(), exchange(s, ecu, req))))
             except (TimeoutError, OSError, ValueError) as e:
                 row["error"] = "%s: %s" % (type(e).__name__, e)
             line = json.dumps(row)
             print(line, flush=True)
             fh.write(line + "\n")
             time.sleep(SPACING_S)
+    return out
+
+
+def cmd_recon(args):
+    if not args.yes_parked:
+        sys.exit("refusing: add --yes-parked to confirm parked, handbrake on, ignition on, read-only")
+    plan = [(ecu, bytes.fromhex(did)) for ecu, did in RECON_PLAN]
+    print("recon: %d read-only identification requests" % len(plan), file=sys.stderr)
+    out = run_requests(plan, args.gateway, args.local, args.capture_dir)
+    print("saved", out, file=sys.stderr)
+
+
+def cmd_read(args):
+    if not args.yes_parked:
+        sys.exit("refusing: add --yes-parked to confirm parked, handbrake on, ignition on, read-only")
+    if len(args.requests) > MAX_REQUESTS:
+        sys.exit("at most %d requests per run" % MAX_REQUESTS)
+    out = run_requests([(args.ecu, r) for r in args.requests], args.gateway, args.local, args.capture_dir)
     print("saved", out, file=sys.stderr)
 
 
@@ -167,6 +201,12 @@ def main(argv=None):
     r.add_argument("--yes-parked", action="store_true")
     r.add_argument("requests", nargs="+", type=parse_request)
     r.set_defaults(fn=cmd_read)
+    c = sub.add_parser("recon", help="fixed read-only identification sweep (I-level, SVK, part/serial numbers)")
+    c.add_argument("--gateway", required=True, type=link_local)
+    c.add_argument("--local", type=link_local)
+    c.add_argument("--capture-dir", default=str(Path(__file__).resolve().parent.parent / ".local" / "captures"))
+    c.add_argument("--yes-parked", action="store_true")
+    c.set_defaults(fn=cmd_recon)
     args = p.parse_args(argv)
     args.fn(args)
 
