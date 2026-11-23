@@ -67,7 +67,10 @@ def _recv_exact(sock, n, deadline):
         if left <= 0:
             raise TimeoutError("no reply")
         sock.settimeout(left)
-        part = sock.recv(n - len(buf))
+        try:
+            part = sock.recv(n - len(buf))
+        except socket.timeout:  # not a TimeoutError subclass before Python 3.10
+            raise TimeoutError("no reply") from None
         if not part:
             raise ConnectionError("gateway closed connection")
         buf.extend(part)
