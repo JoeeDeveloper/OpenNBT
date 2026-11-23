@@ -18,26 +18,33 @@ configuration and is the only modifying step in this phase.** It is the owner's 
 the owner sources. This project does not provide, fetch, or script it.
 
 ## 2. Gates (all must be true before the unlock)
-1. You decide to proceed, knowing the unlock is not something this project can undo. Risk is real but I cannot put a
-   number on it: community reports say the unlock can fail or error partway [REF], and I have no measured failure rate.
-2. Car on a battery maintainer, parked, handbrake on, not driven afterwards until the unit has been checked.
-3. A recovery route exists: you know who could reflash or recode the head unit if it misbehaves (dealer or specialist),
-   and you accept the cost. [UNKNOWN] whether a warranty or service-plan position changes this.
-4. A backup of the head unit's coding. **Gap:** our tools cannot take one. It needs BMW tools (ISTA/E-Sys style) that
-   you do not currently have, so either obtain them legitimately first or accept proceeding without a backup.
-5. Phase 1 data saved off OneDrive (it holds unredacted serials).
+
+**Owner sign-off recorded 2026-11-23:**
+
+1. Accepted. Owner proceeds knowing the unlock is not something this project can undo, and that no failure rate can
+   be quoted.
+2. Confirmed: car on a battery maintainer, parked, handbrake on.
+3. Confirmed: owner has a recovery route (dealer/specialist) and accepts that cost if needed.
+4. Accepted as a gap: proceeding **without** a coding backup. No BimmerCode or BMW-tool backup was taken. This is a
+   real, accepted risk, not a resolved one — if the unlock or any later step goes wrong, there is nothing here to
+   restore from.
+5. Done: Phase 1 captures deleted from the OneDrive-synced folder.
+
+Sourcing the unlock tool itself and the root credential remain the owner's own steps (see section 1); neither is
+provided, named, or handled by this project.
 
 ## 3. Steps once approved
-1. (Owner) Run the SSH unlock with FeatureInstaller, reading its documentation for the I-level first. Stop on any
-   unexpected behaviour. Check the infotainment still boots normally, then test SSH reachability only.
+1. (Owner) Run the SSH unlock, reading its documentation for the I-level first. Stop on any unexpected behaviour.
+   Check the infotainment still boots normally, then test SSH reachability only.
 2. (Owner) Obtain the root credential yourself and type it at the prompt. I will not look it up, store it, or put it in
-   any file. Pin the head unit's host key before connecting ([REF] `tools/nbt_ssh_session.py` pins it).
-3. Read-only recon over SSH, as a fixed list of commands reviewed before running: `uname -a`, `ls -l` and `sha256sum`
-   of `libAppFramework.A.so` and `libCoreFramework.A.so`, the HMI version file, `mount` (to see read-only vs
-   read-write), directory listing of `/var/opt/hmi/data/rw/Plugins/` and `/opt/hmi/data/ro/Plugins/`. No writes, no
-   remount, no `chmod`, no package installs.
-4. Copy the two framework libraries into `.local/` (gitignored) for offline symbol/vtable audit against what the F07
-   repo documents. Never commit them (BMW binaries).
+   any file. Pin the head unit's host key before connecting (see `docs/SSH_RECON_COMMANDS.md`).
+3. Read-only recon over SSH: the exact, fixed command list is now in **`docs/SSH_RECON_COMMANDS.md`**. Nothing beyond
+   that list: no writes, no remount, no `chmod`, no package installs.
+4. Copy the two framework libraries into `.local/hmi-libs/` (gitignored; never commit — BMW binaries) and run
+   **`tools/audit_framework_abi.py`** on them (ready, tested against a synthetic fixture, not yet run against a real
+   library). It checks exported symbol names against the F07 precedent (PluginApp, triggerEvent, updateModel, etc.)
+   and reports hashes + which names are present/missing. A name match is a name check only, not a layout/vtable
+   proof — see the script's own docstring.
 5. Close the session. Decide on Phase 3/4 from the audit, not before.
 
 ## 4. Stop conditions
