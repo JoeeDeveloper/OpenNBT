@@ -32,6 +32,7 @@ REPLY_TIMEOUT_S = 2.0
 PENDING_TOTAL_S = 5.0
 READ_RE = re.compile(r"^(01[0-9A-Fa-f]{2}|22[0-9A-Fa-f]{4})$")
 VIN_DIDS = {"22f190"}
+SERIAL_DIDS = {"22f18c"}  # ECU serial numbers identify the car's hardware
 # UNVERIFIED (general BMW knowledge, not confirmed on your car): ECU addresses and identification DIDs.
 # A wrong address/DID just times out or returns a negative response; nothing is written.
 RECON_PLAN = [
@@ -108,10 +109,12 @@ def exchange(sock, ecu, uds, reply_timeout=REPLY_TIMEOUT_S, pending_total=PENDIN
 
 
 def redact(request_hex, result):
-    if request_hex.replace(" ", "").lower() in VIN_DIDS:
-        for k in ("reply", "data"):
+    key = request_hex.replace(" ", "").lower()
+    marker = "<redacted VIN>" if key in VIN_DIDS else "<redacted serial>" if key in SERIAL_DIDS else None
+    if marker:
+        for k in ("reply", "data", "ascii"):
             if k in result:
-                result[k] = "<redacted VIN>"
+                result[k] = marker
     return result
 
 
@@ -137,7 +140,7 @@ def run_requests(plan, gateway, local, out_dir, port=HSFZ_PORT, on_row=None):
                 # fresh connection per request: a late reply can never match a later request
                 with socket.create_connection((gateway, port), timeout=2,
                                               source_address=(local, 0) if local else None) as s:
-                    row.update(add_ascii(redact(req.hex(), exchange(s, ecu, req))))
+                    row.update(redact(req.hex(), add_ascii(exchange(s, ecu, req))))
             except (TimeoutError, OSError, ValueError) as e:
                 row["error"] = "%s: %s" % (type(e).__name__, e)
             line = json.dumps(row)

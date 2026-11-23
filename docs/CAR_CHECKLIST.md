@@ -14,3 +14,11 @@ Before: laptop charged, car battery maintainer on if possible, handbrake on, par
 - DME address 0x12 over HSFZ: confirmed in `ID6 .../diag_link.c` (tester 0xF4, control 0x0001, alive-check 0x0012/0x0013 all match our probe).
 - 0x63 appears as the head unit's own diagnostic source address (`ID6 docs/MOST.md`), so a head-unit target of 0x63 is plausible, still unverified as a *target*.
 - Not found in any reference: gateway 0x10, cluster 0x60 as targets, and DIDs F101, F150, F18C, F187, F189. These stay unverified guesses; negative responses are expected and informative.
+
+## Update after first real recon (2026-11-23, one NBT car, F-series, label NBT_L15184A)
+- Discovery frame (`00 00 00 00 00 11` to UDP 6811) works: the gateway answered with a 56-byte reply. Confirmed on one car.
+- Over HSFZ via the gateway, ECUs **0x10, 0x63, 0x60, 0x12** all answered, so those addresses are confirmed as targets.
+- DIDs **F101, F150, F18C** answered on all four ECUs. **F187 and F189** returned NRC 31 (not supported) on the head unit and DME.
+- F101 decodes as a list of 8-byte records (class, 4-byte module id, 3-byte version); the count field matched the number of records on all three ECUs. The head-unit versions (3.3.1, 3.5.1, 3.7.1) are consistent with the on-screen Media/Phone `003.003.001`. Class names (BTLD/SWFL/HWEL...) are INFERRED, not confirmed.
+- F150 returns 3 bytes per ECU (meaning unknown). No readable HMI build string was returned, so the framework ABI question is still open.
+- F18C (ECU serial) is now redacted in captures, like the VIN.

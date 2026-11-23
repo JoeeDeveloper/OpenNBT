@@ -100,6 +100,12 @@ class Probe(unittest.TestCase):
         with self.assertRaises(ValueError):
             hp.exchange(None, 0x12, bytes.fromhex("2E4300"))
 
+    def test_serial_and_ascii_redacted_and_read_f190_does_not_error(self):
+        r = hp.redact("22f18c", {"reply": "62 f1 8c 31", "data": "31", "ascii": "1"})
+        self.assertEqual((r["data"], r["ascii"]), ("<redacted serial>",) * 2)
+        res = hp.redact("22f190", hp.add_ascii({"reply": "x", "data": "41 42"}))
+        self.assertEqual(res["ascii"], "<redacted VIN>")
+
     def test_vin_redacted(self):
         r = hp.redact("22f190", {"reply": "62 f1 90 aa", "data": "aa"})
         self.assertEqual(r["data"], "<redacted VIN>")
@@ -146,6 +152,21 @@ class DemoAndAnalyzer(unittest.TestCase):
         text = ac.summarize(rows)
         self.assertIn("ECU 63", text)
         self.assertIn("NRC 31", text)
+
+    def test_svk_decode(self):
+        # gateway-style reply captured from a real NBT car (no serials/VIN in F101)
+        data = ("01 01 00 08 22 06 17 8a 21 a7 01 00 00 10 00 00 00 06 00 00 07 9c 04 0a 14 08 00 00 07 9d 04 0a 32 08 "
+                "00 00 07 9e 04 13 02 01 00 00 07 92 00 04 0b 02 00 00 0f 3a ff ff ff 02 00 00 0f 38 ff ff ff 02 00 00 "
+                "0f 3d ff ff ff 02 00 00 0f 3b ff ff ff")
+        svk = ac.decode_svk(data)
+        self.assertEqual(svk["count"], 8)
+        self.assertEqual(svk["records"][0], {"class": "BTLD", "id": "0x079C", "version": "4.10.20"})
+        self.assertEqual(svk["records"][1]["class"], "SWFL")
+        self.assertEqual(svk["records"][4], {"class": "HWAP", "id": "0x0F3A", "version": None})
+        self.assertIsNone(ac.decode_svk("01 02"))
+        self.assertIsNone(ac.decode_svk("zz"))
+        text = ac.summarize([{"ecu": "10", "request": "22 f1 01", "reply": "x", "data": data}])
+        self.assertIn("0x079C  4.10.20", text)
 
     def test_analyzer_empty_and_ilevel(self):
         self.assertIn("empty", ac.summarize([]))

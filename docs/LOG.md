@@ -35,3 +35,4 @@ Known unverified in the probe: the UDP discovery frame (`00 00 00 00 00 11` to p
 | 11 | Added `tools/opennbt_gui.py` (tkinter, demo mode), `tools/analyze_capture.py`, `tools/fake_gateway.py`; `run_requests` gained `port`/`on_row`. GUI NOT run here: no tkinter/display on this Linux box, syntax-checked only. | 16 tests pass |
 | 12 | Grepped refs for ECU addresses/DIDs/gateway IPs; wrote `docs/CAR_CHECKLIST.md` and `run_gui.bat`. Recon plan unchanged (nothing in refs contradicts it; most of it is still unconfirmed). | Done |
 | 13 | Added README, GitHub Actions CI (ubuntu+windows, py3.9/3.13, unittest + py_compile of the GUI), dependabot for actions, issue/PR templates, SECURITY.md | Pending first CI run |
+| 14 | First real recon on a car (gateway found by discovery; ECUs 10/63/60/12 answered). Added SVK-like decoder to analyze_capture.py, redaction of F18C serials, fixed redact/ascii ordering so `read 22F190` no longer errors. | 18 tests pass |
