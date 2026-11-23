@@ -9,3 +9,4 @@ ref/
 .env
 backups/
 captures/
+__pycache__/
