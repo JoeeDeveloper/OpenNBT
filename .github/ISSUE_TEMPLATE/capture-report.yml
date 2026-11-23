@@ -1,0 +1,17 @@
+name: Capture report (from a real car)
+description: Share recon results from your own NBT car
+labels: [capture]
+body:
+  - type: markdown
+    attributes:
+      value: "Do NOT paste your VIN, MAC address, or unredacted discovery replies. The probe redacts VIN DID F190 automatically; check before posting."
+  - type: input
+    id: car
+    attributes: {label: "Model / year / engine", placeholder: "e.g. F10 2013 diesel"}
+  - type: input
+    id: ilevel
+    attributes: {label: "I-level and HMI build (from the head-unit version screen)"}
+  - type: textarea
+    id: output
+    attributes: {label: "recon output (JSON lines)", render: json}
+    validations: {required: true}

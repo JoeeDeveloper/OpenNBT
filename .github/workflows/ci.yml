@@ -1,0 +1,24 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.9", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Syntax check all tools (includes the tkinter GUI, which is not run in CI)
+        run: python -m py_compile tools/hsfz_probe.py tools/analyze_capture.py tools/fake_gateway.py tools/opennbt_gui.py
+      - name: Unit tests (fake gateway on loopback, no car needed)
+        run: python -m unittest discover tests -v
