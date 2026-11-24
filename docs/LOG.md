@@ -38,3 +38,10 @@ Known unverified in the probe: the UDP discovery frame (`00 00 00 00 00 11` to p
 | 14 | First real recon on a car (gateway found by discovery; ECUs 10/63/60/12 answered). Added SVK-like decoder to analyze_capture.py, redaction of F18C serials, fixed redact/ascii ordering so `read 22F190` no longer errors. | 18 tests pass |
 | 15 | Searched refs for module ids/build strings: nothing comparable (only NBTevo SWFL ids). Wrote docs/PHASE2_PLAN.md (plan only; SSH unlock is the single modifying step and is owner-run). | Done |
 | 16 | Owner worked through Phase 2 gates (accepted risk, maintainer connected, recovery route confirmed, proceeding without a coding backup, OneDrive captures deleted). Wrote docs/SSH_RECON_COMMANDS.md (fixed read-only command list) and tools/audit_framework_abi.py (offline ELF32 symbol/hash audit vs F07 precedent names). | 23 tests pass |
+
+## 2026-11-24 - Project pivot: free BMW coding over UDS
+
+| # | Action | Result |
+|---|---|---|
+| 17 | Owner decision: primary direction pivots from the QNX HMI plugin toward free BMW coding (BimmerCode-style reads/writes over UDS/HSFZ) — no paid subscription, no FSC bypass. Two uploaded `.BIN` update-patch files were analysed (static, read-only; not committed, deleted from scratch after). They implement a symlink/path-traversal unlock in the head unit's own USB-update daemon ("NBTCarHU") matching a named, BMW-patched (2019) vulnerability later confirmed via a published VicOne write-up the owner linked. | Logged on issue #5; no code change |
+| 18 | GitHub housekeeping: closed #1 and #2 (confirmed done on the real car), labelled #6 (QNX toolchain) `deprioritized` (parked, not abandoned), opened #9 (Phase 4: free coding reads + write scaffolding) as the active roadmap item. Set repo description/topics. Updated README to reflect the pivot. | Done |

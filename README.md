@@ -1,10 +1,16 @@
 # OpenNBT
 
-Early-stage, hobbyist research into running a native plugin on a BMW **NBT** head unit (original NBT, x86/QNX, not NBTevo)
-and showing diesel/DME data on the car's screen. Nothing here has been run against a real car yet.
+Hobbyist, read-only-first diagnostics for an original (pre-Evo) BMW **NBT** head unit over HSFZ/UDS. Started as
+research into a native QNX plugin to show diesel/DME data on the car's screen; as of November 2026 the project's
+primary direction has pivoted toward making the tool do as much as possible with the car **for free** —
+BimmerCode-style reads (and eventually generic coding scaffolding) over UDS, with no paid subscription and no
+FSC/feature-activation bypass. The QNX plugin idea is parked, not abandoned (see [#6](https://github.com/JoeeDeveloper/OpenNBT/issues/6)).
 
-**Status:** Phase 1, host-side read-only recon. See [docs/FEASIBILITY.md](docs/FEASIBILITY.md) for the go/no-go
-reasoning and the main risk (framework ABI match), and [docs/LOG.md](docs/LOG.md) for every step taken.
+**Status:** Phase 1 (read-only recon) is done and confirmed against a real car. Phase 2 (SSH unlock, for the
+original plugin path) is drafted and gated, awaiting the owner's own go/no-go. Phase 4 (free coding reads/writes)
+is the current focus — see [open issues](https://github.com/JoeeDeveloper/OpenNBT/issues) for the live roadmap,
+[docs/FEASIBILITY.md](docs/FEASIBILITY.md) for the original plugin's go/no-go reasoning, and
+[docs/LOG.md](docs/LOG.md) for every step taken.
 
 [![CI](https://github.com/JoeeDeveloper/OpenNBT/actions/workflows/ci.yml/badge.svg)](https://github.com/JoeeDeveloper/OpenNBT/actions/workflows/ci.yml)
 
@@ -42,11 +48,12 @@ python tools/analyze_capture.py
 
 On Windows, `run_gui.bat` starts the GUI.
 
-## Not in scope (yet)
+## Not in scope
 
-SSH access, writing to the head unit, FeatureInstaller, FSC/feature activation, and building the QNX plugin (needs a
-licensed QNX 6.5 SDP). Each of those is a separate, explicitly approved step. This is not related to NBTevo Tool or any
-FSC-bypass project.
+FeatureInstaller/FSC feature-activation bypass, and anything requiring a paid subscription (BimmerCode, BimmerStudio,
+or similar). SSH access and writing to the head unit are separate, explicitly gated steps owned and run by the car's
+owner, not by this project — see [docs/PHASE2_PLAN.md](docs/PHASE2_PLAN.md). Building the QNX plugin needs a licensed
+QNX 6.5 SDP and is currently parked. This is not related to NBTevo Tool or any FSC-bypass project.
 
 ## Disclaimer
 
