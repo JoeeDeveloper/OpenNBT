@@ -24,6 +24,8 @@ Roadmap and open questions are tracked in [GitHub Issues](https://github.com/Joe
 | `tools/opennbt_gui.py` | tkinter GUI around the probe, with a demo mode (no car) |
 | `tools/analyze_capture.py` | Summarizes `.local/captures/*.jsonl` per ECU |
 | `tools/fake_gateway.py` | Fake HSFZ gateway on loopback for demos and tests (invented replies) |
+| `tools/uds_write.py` | Generic UDS write scaffolding: VIN-gated, backs up before writing, dry-run unless `--commit` |
+| `tools/audit_framework_abi.py` | Offline ELF32 symbol/hash audit of HMI framework libraries (Phase 2) |
 | `tests/` | Unit tests against the fake gateway |
 | `docs/CAR_CHECKLIST.md` | What to do at the car |
 
@@ -36,6 +38,7 @@ Python 3.8+ and the standard library only. The GUI needs tkinter (included with 
 - At most 12 requests per run, spaced 0.2 s, one fresh connection each.
 - VIN reads are redacted, and captures go to `.local/captures/` (gitignored).
 - The ECU addresses and DIDs used by `recon` are partly **unverified** guesses; see the checklist for what the reference repos confirm.
+- `tools/uds_write.py` is separate from the probe and can send WriteDataByIdentifier/SecurityAccess, but only after reading and matching the car's VIN and backing up the current value of the target DID; it sends nothing further unless both `--commit` and `--i-understand-this-writes-to-the-ecu` are given. No BMW SecurityAccess seed-key algorithm is shipped or known, so a protected DID will just come back refused (NRC 0x33).
 
 ## Quick start
 

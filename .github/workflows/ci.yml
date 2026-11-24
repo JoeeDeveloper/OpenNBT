@@ -19,6 +19,6 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Syntax check all tools (includes the tkinter GUI, which is not run in CI)
-        run: python -m py_compile tools/hsfz_probe.py tools/analyze_capture.py tools/fake_gateway.py tools/opennbt_gui.py
+        run: python -m py_compile tools/hsfz_probe.py tools/analyze_capture.py tools/fake_gateway.py tools/opennbt_gui.py tools/uds_write.py tools/audit_framework_abi.py
       - name: Unit tests (fake gateway on loopback, no car needed)
         run: python -m unittest discover tests -v
