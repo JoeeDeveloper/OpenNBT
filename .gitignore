@@ -1,5 +1,6 @@
 .local/
 ref/
+CLAUDE.md
 *.so
 *.pcap
 *.pcapng
