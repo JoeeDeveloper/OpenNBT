@@ -117,6 +117,17 @@ class Probe(unittest.TestCase):
             hp.parse_request(did)
             self.assertNotIn(did.lower(), hp.VIN_DIDS)
 
+    def test_idscan_plan_is_read_only_bounded_and_disjoint_from_recon(self):
+        self.assertLessEqual(len(hp.IDSCAN_PLAN), hp.MAX_REQUESTS)
+        for ecu, did in hp.IDSCAN_PLAN:
+            hp.parse_request(did)
+            self.assertNotIn(did.lower(), hp.VIN_DIDS)
+        self.assertEqual(set(hp.IDSCAN_PLAN) & set(hp.RECON_PLAN), set())
+
+    def test_idscan_refuses_without_confirmation(self):
+        with self.assertRaises(SystemExit):
+            hp.main(["idscan", "--gateway", "169.254.10.3"])
+
     def test_add_ascii(self):
         self.assertEqual(hp.add_ascii({"data": "41 42 43"})["ascii"], "ABC")
         self.assertNotIn("ascii", hp.add_ascii({"data": "00 01 ff"}))
@@ -152,6 +163,20 @@ class DemoAndAnalyzer(unittest.TestCase):
         text = ac.summarize(rows)
         self.assertIn("ECU 63", text)
         self.assertIn("NRC 31", text)
+
+    def test_idscan_against_fake_gateway(self):
+        port, stop = fg.start()
+        rows = []
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                plan = [(e, bytes.fromhex(x)) for e, x in hp.IDSCAN_PLAN]
+                hp.run_requests(plan, "127.0.0.1", "", d, port=port, on_row=rows.append)
+        finally:
+            stop()
+        self.assertEqual(len(rows), len(hp.IDSCAN_PLAN))
+        by = {(r["ecu"], r["request"]): r for r in rows}
+        self.assertEqual(by[("63", "22 f1 88")]["ascii"][:7], "HU-DEMO")
+        self.assertEqual(by[("60", "22 f1 88")]["nrc"], "31")
 
     def test_svk_decode(self):
         # gateway-style reply captured from a real NBT car (no serials/VIN in F101)

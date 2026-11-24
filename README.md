@@ -20,7 +20,7 @@ Roadmap and open questions are tracked in [GitHub Issues](https://github.com/Joe
 
 | File | Purpose |
 |---|---|
-| `tools/hsfz_probe.py` | Read-only HSFZ/UDS probe: `discover`, `recon` (fixed 12-request identification sweep), `read` |
+| `tools/hsfz_probe.py` | Read-only HSFZ/UDS probe: `discover`, `recon`, `idscan` (fixed identification sweeps), `read` |
 | `tools/opennbt_gui.py` | tkinter GUI around the probe, with a demo mode (no car) |
 | `tools/analyze_capture.py` | Summarizes `.local/captures/*.jsonl` per ECU |
 | `tools/fake_gateway.py` | Fake HSFZ gateway on loopback for demos and tests (invented replies) |
@@ -43,6 +43,7 @@ Python 3.8+ and the standard library only. The GUI needs tkinter (included with 
 python -m unittest discover tests
 python tools/opennbt_gui.py            # tick "Demo mode" to try it without a car
 python tools/hsfz_probe.py recon --gateway <169.254.x.x> --local <laptop 169.254.x.x> --yes-parked
+python tools/hsfz_probe.py idscan --gateway <169.254.x.x> --local <laptop 169.254.x.x> --yes-parked
 python tools/analyze_capture.py
 ```
 

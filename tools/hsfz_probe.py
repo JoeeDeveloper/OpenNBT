@@ -6,6 +6,7 @@ is opened. Parked, ignition on, handbrake on. Nothing is sent unless --yes-parke
 
   discover  UDP broadcast to find the gateway address (frame layout is UNVERIFIED, see DISCOVERY_REQUEST)
   recon     fixed 12-request identification sweep (gateway, head unit, cluster, DME), then read the capture
+  idscan    fixed 12-request sweep of standard ISO 14229-1 Annex C identification DIDs not covered by recon
   read      one fresh TCP connection per request, spaced, bounded, captures to .local/captures/ (gitignored)
 
 VIN (DID F190) and discovery payloads are never printed or stored; they are replaced by a marker.
@@ -40,6 +41,18 @@ RECON_PLAN = [
     (0x63, "22F101"), (0x63, "22F150"), (0x63, "22F187"), (0x63, "22F189"), (0x63, "22F18C"),  # head unit
     (0x60, "22F101"), (0x60, "22F150"),                                        # instrument cluster
     (0x12, "22F187"), (0x12, "22F18C"),                                        # DME/DDE
+]
+# Standard ISO 14229-1 Annex C identification DIDs that RECON_PLAN does not already cover: F188
+# vehicleManufacturerECUSoftwareNumber, F191 vehicleManufacturerECUHardwareNumber, F18B ECUManufacturingDate.
+# Standardized by the spec, but support is implementation-dependent: F187/F189 (same Annex) already came back
+# NRC 31 on the head unit and DME on the real car, so expect some of these to refuse too. No FA/VO or "software
+# version table" DID is included here: no public source confirms one exists as a plain UDS 0x22 read (see
+# docs/LOG.md, 2026-11-24).
+IDSCAN_PLAN = [
+    (0x10, "22F188"), (0x10, "22F191"), (0x10, "22F18B"),
+    (0x63, "22F188"), (0x63, "22F191"), (0x63, "22F18B"),
+    (0x60, "22F188"), (0x60, "22F191"), (0x60, "22F18B"),
+    (0x12, "22F188"), (0x12, "22F191"), (0x12, "22F18B"),
 ]
 
 
@@ -161,6 +174,15 @@ def cmd_recon(args):
     print("saved", out, file=sys.stderr)
 
 
+def cmd_idscan(args):
+    if not args.yes_parked:
+        sys.exit("refusing: add --yes-parked to confirm parked, handbrake on, ignition on, read-only")
+    plan = [(ecu, bytes.fromhex(did)) for ecu, did in IDSCAN_PLAN]
+    print("idscan: %d read-only identification requests" % len(plan), file=sys.stderr)
+    out = run_requests(plan, args.gateway, args.local, args.capture_dir)
+    print("saved", out, file=sys.stderr)
+
+
 def cmd_read(args):
     if not args.yes_parked:
         sys.exit("refusing: add --yes-parked to confirm parked, handbrake on, ignition on, read-only")
@@ -215,6 +237,12 @@ def main(argv=None):
     c.add_argument("--capture-dir", default=str(Path(__file__).resolve().parent.parent / ".local" / "captures"))
     c.add_argument("--yes-parked", action="store_true")
     c.set_defaults(fn=cmd_recon)
+    i = sub.add_parser("idscan", help="fixed read-only sweep of standard ISO 14229-1 identification DIDs recon doesn't try")
+    i.add_argument("--gateway", required=True, type=link_local)
+    i.add_argument("--local", type=link_local)
+    i.add_argument("--capture-dir", default=str(Path(__file__).resolve().parent.parent / ".local" / "captures"))
+    i.add_argument("--yes-parked", action="store_true")
+    i.set_defaults(fn=cmd_idscan)
     args = p.parse_args(argv)
     args.fn(args)
 

@@ -22,3 +22,9 @@ Before: laptop charged, car battery maintainer on if possible, handbrake on, par
 - F101 decodes as a list of 8-byte records (class, 4-byte module id, 3-byte version); the count field matched the number of records on all three ECUs. The head-unit versions (3.3.1, 3.5.1, 3.7.1) are consistent with the on-screen Media/Phone `003.003.001`. Class names (BTLD/SWFL/HWEL...) are INFERRED, not confirmed.
 - F150 returns 3 bytes per ECU (meaning unknown). No readable HMI build string was returned, so the framework ABI question is still open.
 - F18C (ECU serial) is now redacted in captures, like the VIN.
+
+## Next time at the car: `idscan`
+`python tools\hsfz_probe.py idscan --gateway <gw> --local <laptop> --yes-parked` tries three more standard
+ISO 14229-1 identification DIDs (F188, F191, F18B) on the same four ECUs — 12 more read-only requests, same
+safety model as `recon`. F187/F189 (same standard range) already came back NRC 31 on the head unit and DME, so
+expect some refusals; any that answer add free, already-standardized ECU identification data.
