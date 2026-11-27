@@ -54,5 +54,6 @@ Known unverified in the probe: the UDP discovery frame (`00 00 00 00 00 11` to p
 | # | Action | Result |
 |---|---|---|
 | 22 | Added an `idscan` button to `tools/opennbt_gui.py` (mirrors `recon`, same safety gating). | 38 tests pass; published |
-| 23 | Ran `idscan` on the real car (ECUs 10/63/60/12, different laptop/ENET adapter this time). F188/F191 (ECUSoftwareNumber/ECUHardwareNumber): NRC 31 on all four. F18B (ECUManufacturingDate) answered on all four — `15 03 02`/`15 03 13`/`15 03 13`/`15 03 16`; INFERRED as 2021-03-(02/19/19/22), unverified. | Logged in docs/CAR_CHECKLIST.md |
+| 23 | Ran `idscan` on the real car (ECUs 10/63/60/12, different laptop/ENET adapter this time). F188/F191 (ECUSoftwareNumber/ECUHardwareNumber): NRC 31 on all four. F18B (ECUManufacturingDate) answered on all four — `15 03 02`/`15 03 13`/`15 03 13`/`15 03 16`. | Logged in docs/CAR_CHECKLIST.md |
+| 23a | Owner supplied this car's DVLA record (first registered 05 Oct 2015). An initial hex decode of F18B's bytes gave 2021, which doesn't fit; re-reading the same bytes as **BCD** gives 2015-03-(02/13/13/16) for the four ECUs — consistent with the October 2015 registration. Corrected the decode in docs/CAR_CHECKLIST.md. F18A still doesn't decode under either reading. | Corrected |
 | 24 | Ad hoc `read 22F18A 22F199 22F19D` on the head unit and DME: F18A (ECUInstallationDate) answered on the head unit only (`00 00 20`, doesn't fit the F18B decode, left uninterpreted); F199 (programmingDate) and F19D (CVN) refused (NRC 31) on both. | Logged in docs/CAR_CHECKLIST.md |

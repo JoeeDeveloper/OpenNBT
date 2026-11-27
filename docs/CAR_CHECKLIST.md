@@ -27,9 +27,12 @@ Before: laptop charged, car battery maintainer on if possible, handbrake on, par
 - The GUI gained a second button for `idscan` (mirrors `recon`); 38 tests passed before publishing.
 - F188 and F191 (ECUSoftwareNumber / ECUHardwareNumber) returned NRC 31 (not supported) on all four ECUs (10, 63, 60, 12).
 - F18B (ECUManufacturingDate) answered on all four: `15 03 02` (0x10), `15 03 13` (0x63), `15 03 13` (0x60),
-  `15 03 16` (0x12). INFERRED decode (not confirmed against any reference): byte1 = year-2000 in hex (0x15 = 2021),
-  byte2 = month (0x03 = March), byte3 = day in hex (0x02/0x13/0x16 = 2/19/22) — i.e. gateway built 2021-03-02,
-  head unit and cluster both 2021-03-19, DME 2021-03-22. Plausible (different suppliers, nearby dates) but unverified.
+  `15 03 16` (0x12). Decode: each byte is **BCD**, not hex (byte1 = year-within-century, byte2 = month, byte3 =
+  day) — i.e. gateway built 2015-03-02, head unit and cluster both 2015-03-13, DME 2015-03-16. CROSS-CHECKED
+  against this car's DVLA record (first registered 05 Oct 2015) — a March 2015 build date for every module is
+  consistent with that, about seven months' lead time. An earlier hex reading of the same bytes (giving 2021)
+  was ruled out by this same check. Still only one car; the BCD-date interpretation is corroborated, not proven
+  for every NBT Evo unit.
 - Ad hoc `read 22F18A 22F199 22F19D` (ECUInstallationDate, programmingDate, CVN) on the head unit (0x63) and DME
   (0x12): F18A answered on the head unit only (`00 00 20`) — does not fit the F18B date decode, left
   uninterpreted. F199 and F19D came back NRC 31 on both ECUs tried.
