@@ -23,8 +23,18 @@ Before: laptop charged, car battery maintainer on if possible, handbrake on, par
 - F150 returns 3 bytes per ECU (meaning unknown). No readable HMI build string was returned, so the framework ABI question is still open.
 - F18C (ECU serial) is now redacted in captures, like the VIN.
 
-## Next time at the car: `idscan`
-`python tools\hsfz_probe.py idscan --gateway <gw> --local <laptop> --yes-parked` tries three more standard
-ISO 14229-1 identification DIDs (F188, F191, F18B) on the same four ECUs — 12 more read-only requests, same
-safety model as `recon`. F187/F189 (same standard range) already came back NRC 31 on the head unit and DME, so
-expect some refusals; any that answer add free, already-standardized ECU identification data.
+## Update after `idscan` (2026-11-27, same car, different laptop)
+- The GUI gained a second button for `idscan` (mirrors `recon`); 38 tests passed before publishing.
+- F188 and F191 (ECUSoftwareNumber / ECUHardwareNumber) returned NRC 31 (not supported) on all four ECUs (10, 63, 60, 12).
+- F18B (ECUManufacturingDate) answered on all four: `15 03 02` (0x10), `15 03 13` (0x63), `15 03 13` (0x60),
+  `15 03 16` (0x12). INFERRED decode (not confirmed against any reference): byte1 = year-2000 in hex (0x15 = 2021),
+  byte2 = month (0x03 = March), byte3 = day in hex (0x02/0x13/0x16 = 2/19/22) — i.e. gateway built 2021-03-02,
+  head unit and cluster both 2021-03-19, DME 2021-03-22. Plausible (different suppliers, nearby dates) but unverified.
+- Ad hoc `read 22F18A 22F199 22F19D` (ECUInstallationDate, programmingDate, CVN) on the head unit (0x63) and DME
+  (0x12): F18A answered on the head unit only (`00 00 20`) — does not fit the F18B date decode, left
+  uninterpreted. F199 and F19D came back NRC 31 on both ECUs tried.
+
+## Next time at the car
+No fixed plan queued. FA/VO/SVT still has no confirmed free UDS path (see docs/LOG.md, 2026-11-24). Untried
+standard Annex C DIDs remain (F180-F186, F192-F198 except F18A/F199/F19D above) if there's ever a reason to look
+further, but nothing here promises they'd answer.
