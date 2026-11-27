@@ -22,6 +22,10 @@ def recon_plan():
     return [(ecu, bytes.fromhex(did)) for ecu, did in hp.RECON_PLAN]
 
 
+def idscan_plan():
+    return [(ecu, bytes.fromhex(did)) for ecu, did in hp.IDSCAN_PLAN]
+
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -39,10 +43,12 @@ class App(tk.Tk):
             row=1, column=0, columnspan=4, sticky="w", pady=4)
         ttk.Checkbutton(f, text="Demo mode (fake gateway, no car)", variable=self.demo).grid(
             row=2, column=0, columnspan=4, sticky="w")
-        self.btn = ttk.Button(f, text="Run recon (12 read-only requests)", command=self.start)
+        self.btn = ttk.Button(f, text="Run recon (12 read-only requests)", command=lambda: self.start(recon_plan))
         self.btn.grid(row=3, column=0, columnspan=2, pady=6, sticky="w")
+        self.btn2 = ttk.Button(f, text="Run idscan (12 read-only requests)", command=lambda: self.start(idscan_plan))
+        self.btn2.grid(row=4, column=0, columnspan=2, pady=(0, 6), sticky="w")
         self.status = ttk.Label(f, text="Idle")
-        self.status.grid(row=3, column=2, columnspan=2, sticky="w")
+        self.status.grid(row=4, column=2, columnspan=2, sticky="w")
         cols = ("ecu", "request", "result", "text")
         self.tree = ttk.Treeview(self, columns=cols, show="headings", height=14)
         for c, w in zip(cols, (60, 90, 260, 300)):
@@ -53,18 +59,20 @@ class App(tk.Tk):
         self.summary.pack(fill="both", expand=True, padx=8, pady=8)
         self.after(100, self.poll)
 
-    def start(self):
+    def start(self, plan_fn):
         if not self.parked.get():
             self.status.config(text="Tick the parked/handbrake box first")
             return
         self.tree.delete(*self.tree.get_children())
         self.summary.delete("1.0", "end")
         self.btn.state(["disabled"])
+        self.btn2.state(["disabled"])
         self.status.config(text="Running...")
-        threading.Thread(target=self.work, args=(self.gw.get().strip(), self.local.get().strip(), self.demo.get()),
+        threading.Thread(target=self.work,
+                         args=(plan_fn, self.gw.get().strip(), self.local.get().strip(), self.demo.get()),
                          daemon=True).start()
 
-    def work(self, gw, local, demo):
+    def work(self, plan_fn, gw, local, demo):
         stop = None
         try:
             port = hp.HSFZ_PORT
@@ -74,7 +82,7 @@ class App(tk.Tk):
             else:
                 gw = hp.link_local(gw)
                 local = hp.link_local(local) if local else ""
-            out = hp.run_requests(recon_plan(), gw, local, CAPTURES, port=port, on_row=lambda r: self.q.put(("row", r)))
+            out = hp.run_requests(plan_fn(), gw, local, CAPTURES, port=port, on_row=lambda r: self.q.put(("row", r)))
             self.q.put(("done", out))
         except Exception as e:  # shown to the user, not swallowed
             self.q.put(("fail", "%s: %s" % (type(e).__name__, e)))
@@ -92,9 +100,11 @@ class App(tk.Tk):
                     self.status.config(text="Saved %s" % val)
                     self.summary.insert("1.0", ac.summarize(ac.load_rows(val)))
                     self.btn.state(["!disabled"])
+                    self.btn2.state(["!disabled"])
                 else:
                     self.status.config(text="Failed: %s" % val)
                     self.btn.state(["!disabled"])
+                    self.btn2.state(["!disabled"])
         except queue.Empty:
             pass
         self.after(100, self.poll)
